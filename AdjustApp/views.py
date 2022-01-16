@@ -1,4 +1,5 @@
 from dataclasses import fields
+from itertools import groupby
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from django.db.models import Sum
@@ -8,6 +9,7 @@ from AdjustApp.serializers import MetricSerializer
 import csv
 import json
 import sqlite3
+
 
 def mainf_():
     url = 'https://gist.githubusercontent.com/kotik/3baa5f53997cce85cc0336cb1256ba8b/raw/3c2a590b9fb3e9c415a99e56df3ddad5812b292f/dataset.csv'
@@ -29,21 +31,25 @@ def mainf_():
                 revenue=row[8],
             )
 
+
 def execute_query(paramDict_):
 
-    #Group By
+    # Group By
     groupby_ = ''
-    for item in paramDict_["groupb"]:
-        groupby_ = groupby_ + item + ', '
+    if paramDict_["groupb"]:
+        for item in paramDict_["groupb"]:
+            groupby_ = groupby_ + item + ', '
+        groupbyC_ = " GROUP BY " + groupby_[0:-2]
 
-    #Conditional query
+    # Conditional query
     whereC_ = ''
     if paramDict_["dateb"]:
-        whereC_ = "WHERE date < '" + paramDict_["dateb"] +"'"
+        whereC_ = "WHERE date < '" + paramDict_["dateb"] + "'"
     if paramDict_["datea"]:
-        whereC_ = "WHERE date > '" + paramDict_["datea"] +"'"
+        whereC_ = "WHERE date > '" + paramDict_["datea"] + "'"
     if paramDict_["datef"] and paramDict_["datet"]:
-        whereC_ = "WHERE date BETWEEN '" + paramDict_["datef"] +"' AND '" + paramDict_["datet"] + "'"
+        whereC_ = "WHERE date BETWEEN '" + \
+            paramDict_["datef"] + "' AND '" + paramDict_["datet"] + "'"
 
     if paramDict_["os"]:
         whereC_ = whereC_ + " AND os = '" + paramDict_["os"] + "'"
@@ -51,37 +57,38 @@ def execute_query(paramDict_):
     if paramDict_["country"]:
         whereC_ = whereC_ + " AND country = '" + paramDict_["country"] + "'"
 
+    # cpi calculation
     cpi_ = ''
     if paramDict_["isCpi"]:
         cpi_ = ", spend/installs AS cpi"
 
-    #Aggregate
+    # Aggregate
     aggrC_ = ''
     if paramDict_["sum"]:
         for item in paramDict_["sum"]:
             aggrC_ = aggrC_ + "SUM(" + item + ") AS " + item + ","
 
-    #Select clause
+    # Select clause
     selectC_ = groupby_ + aggrC_[0:-1] + cpi_
 
-    #Order By 
+    # Order By
     orderC_ = ''
     if paramDict_["orderb"]:
-        orderC_ = paramDict_["orderb"]
+        orderC_ = " ORDER BY " +paramDict_["orderb"]
 
-    #Is descending
+    # Is descending
     if paramDict_["desc"]:
         orderC_ = orderC_ + " desc"
 
     conn = sqlite3.connect('db.sqlite3')
-    sql_query = pd.read_sql_query ('''
+    sql_query = pd.read_sql_query('''
                                 SELECT '''
-                                + selectC_ +
-                                ''' FROM AdjustApp_metric ''' 
-                                + whereC_ +
-                                ''' GROUP BY ''' + groupby_[0:-2] +
-                                ''' ORDER BY ''' + orderC_
-                                , conn)
+                                  + selectC_ +
+                                  ''' FROM AdjustApp_metric '''
+                                  + whereC_ 
+                                  + groupbyC_
+                                  + orderC_
+                                  , conn)
 
     df = pd.DataFrame(sql_query)
     json_list = json.loads(json.dumps(list(df.T.to_dict().values())))
@@ -106,19 +113,19 @@ def root_(request):
         isCpi = request.GET.get('isCpi')
 
         paramDict = {
-            "groupb" : groupb,
-            "orderb" : orderb,
-            "desc" : order_isDesc,
-            "dateb" : dateBefore,
-            "datea" : dateAfter,
-            "datef" : dateFrom,
-            "datet" : dateTo,
-            "sum" : sum,
-            "os" : os,
-            "country" : country,
-            "isCpi" : isCpi
+            "groupb": groupb,
+            "orderb": orderb,
+            "desc": order_isDesc,
+            "dateb": dateBefore,
+            "datea": dateAfter,
+            "datef": dateFrom,
+            "datet": dateTo,
+            "sum": sum,
+            "os": os,
+            "country": country,
+            "isCpi": isCpi
         }
 
         jsonOutput = execute_query(paramDict)
-        
+
         return JsonResponse(jsonOutput, safe=False)
