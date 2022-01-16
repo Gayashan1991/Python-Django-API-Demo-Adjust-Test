@@ -51,6 +51,7 @@ def execute_query(paramDict_):
     if paramDict_["country"]:
         whereC_ = whereC_ + " AND country = '" + paramDict_["country"] + "'"
 
+    #cpi calculation
     cpi_ = ''
     if paramDict_["isCpi"]:
         cpi_ = ", spend/installs AS cpi"
