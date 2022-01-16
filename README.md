@@ -27,6 +27,10 @@ Prerequisites:
 
 `pip install pandas`
 
+2. run django virtual/local server
+
+`python manage.py runserver`
+
 Test Scenarios:
 
 1. Show the number of impressions and clicks that occurred before the 1st of June 2017, broken down by channel and country, sorted by clicks in descending order.
