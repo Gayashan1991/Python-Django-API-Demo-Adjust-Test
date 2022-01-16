@@ -25,13 +25,17 @@ Prerequisites:
   ```pip install djangorestframework```
   
   ```pip install pandas```
+  
+3. run local server
+
+  ```python manage.py runserver```
 
 Test Scenarios:
 
 1. Show the number of impressions and clicks that occurred before the 1st of June 2017, broken down by channel and country, sorted by clicks in descending order.
 
  ```    
- http://127.0.0.1:8000/adjustapi/?groupb=channel&groupb=country&dateb=2017-06-01&sum=impressions&sum=clicks&orderb=clicks
+ http://127.0.0.1:8000/adjustapi/?groupb=channel&groupb=country&dateb=2017-06-01&sum=impressions&sum=clicks&orderb=clicks&desc=true
  ```
 
 
